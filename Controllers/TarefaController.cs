@@ -34,14 +34,14 @@ namespace TrilhaApiDesafio.Controllers
         public IActionResult ObterPorTitulo(string titulo)
         {
             var tarefas = _context.Tarefas.Where(x => x.Titulo.Equals(titulo));
-            return Ok(tarefas);
+            return tarefas.Any() ? Ok(tarefas) : NotFound(); // caso não tenha encontrado nada, pelo menos retorna um 404
         }
 
         [HttpGet("ObterPorData")]
         public IActionResult ObterPorData(DateTime data)
         {
-            var tarefa = _context.Tarefas.Where(x => x.Data.Date == data.Date);
-            return Ok(tarefa);
+            var tarefas = _context.Tarefas.Where(x => x.Data.Date == data.Date);
+            return tarefas.Any() ? Ok(tarefas) : NotFound();
         }
 
         [HttpGet("ObterPorStatus")]
@@ -70,13 +70,16 @@ namespace TrilhaApiDesafio.Controllers
             if (tarefaBanco == null)
                 return NotFound();
 
+            // essas verifcações garantem que, caso a tarefa de entrada tenha valores vazios, mantenha o que tem no banco
+            if(tarefa.Descricao != null) tarefaBanco.Descricao = tarefa.Descricao;
+            if(tarefa.Titulo != null) tarefaBanco.Titulo = tarefa.Titulo;
+            if(tarefa.Status != 0) tarefaBanco.Status = tarefa.Status;
+
             if (tarefa.Data == DateTime.MinValue)
                 return BadRequest(new { Erro = "A data da tarefa não pode ser vazia" });
-
-            tarefaBanco.Descricao = tarefa.Descricao;
-            tarefaBanco.Titulo = tarefa.Titulo;
-            tarefaBanco.Status = tarefa.Status;
+            else
             tarefaBanco.Data = tarefa.Data;
+
             _context.Tarefas.Update(tarefaBanco);
             _context.SaveChanges();
             return Ok(tarefaBanco);
